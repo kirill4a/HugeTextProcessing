@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>exe</OutputType>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\HugeTextProcessing.Generating\HugeTextProcessing.Generating.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="System.CommandLine" />
+	</ItemGroup>
+</Project>

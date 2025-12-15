@@ -1,0 +1,70 @@
+﻿using Bogus;
+using FluentAssertions;
+using HugeTextProcessing.Generating.Commands;
+using HugeTextProcessing.Generating.Generators;
+using HugeTextProcessing.Generating.Tests.Fixtures;
+using HugeTextProcessing.Generating.ValueObjects.Size;
+
+namespace HugeTextProcessing.Generating.Tests;
+
+[Collection(nameof(TempFilesCollection))]
+public class AsyncFileGeneratorTests(TempDirectoryFixture fixture)
+{
+    // max diff in bytes between expected (specified) and actual file size
+    private const long SizeDiffThreshold = 150;
+
+    private static readonly Faker Faker = new();
+    private readonly TempDirectoryFixture _fixture = fixture;
+
+    /*
+    Consider to leverage System.IO.Abstractions and System.IO.Abstractions.TestingHelpers 
+    to replace accessing real file system in unit tests. 
+    See more: https://github.com/TestableIO/System.IO.Abstractions
+
+    Or write your own IO abstractions\interfaces for wrap File/Directory/FileStream and mock them in tests.
+    */
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(10)]
+    [InlineData(100)]
+    [InlineData(1_000)]
+    [InlineData(10_000)]
+    [InlineData(100_000)]
+    [InlineData(1_000_000)]
+    public async Task When_Generated_KiB_FileSizeShouldNotExceed(int itemsCount)
+    {
+        // Arrange
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var path = _fixture.GetTempFileName();
+        const long size = 5;
+        const FileSizeKind sizeKind = FileSizeKind.KiB;
+        var fileSize = FileSize.From(size, sizeKind);
+
+        var sourceData = ArrangeSourceData(itemsCount);
+
+        var command = new FileGeneratingCommand(path, fileSize, sourceData);
+        var generator = new AsyncFileGenerator();
+
+        // Act
+        await generator.ExecuteAsync(command, cts.Token);
+
+        // Assert        
+        File.Exists(path).Should().BeTrue();
+        await AssertFileInfo(new FileInfo(path), fileSize, cts.Token);
+    }
+
+    private static IEnumerable<string> ArrangeSourceData(int itemsCount) =>
+        Enumerable.Range(1, itemsCount)
+                  .Select(i => Faker.Random.String2(1, i));
+
+    private static async ValueTask AssertFileInfo(FileInfo fileInfo, FileSize fileSize, CancellationToken cancellationToken)
+    {
+        fileInfo.Length.Should().BeLessThanOrEqualTo(fileSize.Bytes);
+        fileInfo.Length.Should().BeCloseTo(fileSize.Bytes, SizeDiffThreshold);
+
+        var lines = await File.ReadAllLinesAsync(fileInfo.FullName, cancellationToken);
+        var distinctLines = lines.ToHashSet();
+        distinctLines.Should().HaveCountLessThan(lines.Length);
+    }
+}

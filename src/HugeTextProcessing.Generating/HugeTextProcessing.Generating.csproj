@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<InternalsVisibleTo Include="HugeTextProcessing.Console" />
+		<InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
+		<InternalsVisibleTo Include="$(MSBuildProjectName).Benchmarks" />
+	</ItemGroup>
+</Project>
