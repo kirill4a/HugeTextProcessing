@@ -4,4 +4,7 @@
 		<InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
 		<InternalsVisibleTo Include="$(MSBuildProjectName).Benchmarks" />
 	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\HugeTextProcessing.Abstractions\HugeTextProcessing.Abstractions.csproj" />
+	</ItemGroup>
 </Project>

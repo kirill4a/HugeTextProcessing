@@ -1,4 +1,5 @@
-﻿using HugeTextProcessing.Generating.Commands;
+﻿using HugeTextProcessing.Abstractions;
+using HugeTextProcessing.Generating.Commands;
 using System.Text;
 
 namespace HugeTextProcessing.Generating.Generators;
@@ -8,7 +9,7 @@ internal class AsyncFileGenerator
     private static readonly Encoding _utf8 = Encoding.UTF8;
     private static readonly string[] _indexes = [.. Enumerable.Range(1, 100).Select(i => i.ToString())];
 
-    private readonly char[] _delimiters = ['.', ' '];
+    private readonly char[] _delimiters = Delimiters.Default.Value.ToArray();
     private readonly int _newLineSize = _utf8.GetByteCount(Environment.NewLine);
     private readonly int _delimitersSize;
 
