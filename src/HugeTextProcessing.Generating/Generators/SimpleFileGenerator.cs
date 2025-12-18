@@ -78,7 +78,7 @@ internal class SimpleFileGenerator
     private void WriteItemLine(StreamWriter writer, string indexText, string item)
     {
         writer.Write(indexText);
-        writer.Write(_delimiters);
+        writer.Write(_delimiters.Value);
         writer.Write(item);
         writer.Write(Environment.NewLine);
     }
