@@ -12,7 +12,7 @@ internal class SpanFileGenerator
     private readonly byte[] _newLineBytes = _utf8.GetBytes(Environment.NewLine);
     private readonly Delimiters _delimiters = Delimiters.Default;
 
-    public void Execute(FileGeneratingCommand command)
+    public void Execute(GenerateFileCommand command)
     {
         ArgumentNullException.ThrowIfNull(command);
 

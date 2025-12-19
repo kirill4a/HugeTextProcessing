@@ -18,7 +18,7 @@ internal class AsyncFileGenerator
         _delimitersSize = _utf8.GetByteCount(_delimiters);
     }
 
-    public async ValueTask ExecuteAsync(FileGeneratingCommand command, CancellationToken cancellationToken)
+    public async ValueTask ExecuteAsync(GenerateFileCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
 

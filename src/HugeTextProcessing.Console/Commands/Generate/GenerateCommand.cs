@@ -27,7 +27,7 @@ internal class GenerateCommand : System.CommandLine.Command
                 return;
             }
 
-            var command = new FileGeneratingCommand(
+            var command = new GenerateFileCommand(
                 Path.GetTempFileName(),
                 fileSize,
                 sourceData);
@@ -36,7 +36,7 @@ internal class GenerateCommand : System.CommandLine.Command
         });
     }
 
-    private static void ExecuteWithLog(FileGeneratingCommand command)
+    private static void ExecuteWithLog(GenerateFileCommand command)
     {
         // TODO: replace console output with logging and StopWatch with metrics
         System.Console.WriteLine($"Starting to generate file of size {command.Size.Bytes} bytes at path: {command.Path}");

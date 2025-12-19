@@ -42,7 +42,7 @@ public class SpanFileGeneratorTests(TempDirectoryFixture fixture)
 
         var sourceData = ArrangeSourceData(itemsCount);
 
-        var command = new FileGeneratingCommand(path, fileSize, sourceData);
+        var command = new GenerateFileCommand(path, fileSize, sourceData);
         var generator = new SpanFileGenerator();
 
         // Act

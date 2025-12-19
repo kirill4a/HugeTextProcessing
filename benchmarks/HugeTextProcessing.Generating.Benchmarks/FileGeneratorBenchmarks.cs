@@ -12,7 +12,7 @@ public class FileGeneratorBenchmarks
     const FileSizeKind SizeKind = FileSizeKind.MiB;
 
     private string? _tempDir;
-    private FileGeneratingCommand _command = null!;
+    private GenerateFileCommand _command = null!;
 
     public static IEnumerable<SourceConfig> SourceConfigs =>
     [

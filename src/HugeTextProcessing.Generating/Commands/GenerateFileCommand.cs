@@ -5,9 +5,9 @@ namespace HugeTextProcessing.Generating.Commands;
 /// <summary>
 /// The command to generate text file
 /// </summary>
-public sealed record FileGeneratingCommand
+public sealed record GenerateFileCommand
 {
-    public FileGeneratingCommand(string path, FileSize size, IEnumerable<string> source)
+    public GenerateFileCommand(string path, FileSize size, IEnumerable<string> source)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ArgumentNullException.ThrowIfNull(size);
@@ -18,9 +18,9 @@ public sealed record FileGeneratingCommand
             throw new ArgumentException("File path should be fully qualified", nameof(path));
         }
          
-        Path = path ?? throw new ArgumentNullException(nameof(path));
-        Size = size ?? throw new ArgumentNullException(nameof(size));
-        Source = source ?? throw new ArgumentNullException(nameof(source));
+        Path = path;
+        Size = size;
+        Source = source;
     }
 
     /// <summary>

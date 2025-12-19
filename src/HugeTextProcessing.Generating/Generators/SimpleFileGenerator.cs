@@ -18,7 +18,7 @@ internal class SimpleFileGenerator
         _delimitersSize = _utf8.GetByteCount(_delimiters.Value);
     }
 
-    public void Execute(FileGeneratingCommand command)
+    public void Execute(GenerateFileCommand command)
     {
         ArgumentNullException.ThrowIfNull(command);
 
