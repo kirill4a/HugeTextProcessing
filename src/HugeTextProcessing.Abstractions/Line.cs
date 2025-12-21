@@ -5,6 +5,8 @@
 /// </summary>
 public readonly record struct Line : IComparable<Line>
 {
+    private readonly string _value;
+
     public Line(int index, string value, Delimiters delimiters)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
@@ -14,7 +16,7 @@ public readonly record struct Line : IComparable<Line>
         }
 
         Index = index;
-        Value = value;
+        _value = value;
         Delimiters = delimiters;
     }
 
@@ -26,7 +28,7 @@ public readonly record struct Line : IComparable<Line>
     /// <summary>
     /// The text part
     /// </summary>
-    public string Value { get; }
+    public ReadOnlySpan<char> Value => _value;
 
     /// <summary>
     /// The delimiters part
@@ -40,7 +42,7 @@ public readonly record struct Line : IComparable<Line>
             return this == default ? 0 : 1;
         }
 
-        int valueComparison = Value.CompareTo(other.Value);
+        int valueComparison = Value.CompareTo(other.Value, StringComparison.Ordinal);
         if (valueComparison != 0)
         {
             return valueComparison;
@@ -49,7 +51,7 @@ public readonly record struct Line : IComparable<Line>
         return Index.CompareTo(other.Index);
     }
 
-    public override string ToString() => string.Concat(Index, Delimiters, Value);
+    public override string ToString() => string.Concat(Index, Delimiters, _value);
 
     #region comparison operators
 

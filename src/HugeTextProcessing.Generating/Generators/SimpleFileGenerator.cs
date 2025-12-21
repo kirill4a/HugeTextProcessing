@@ -1,5 +1,6 @@
 ﻿using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Generating.Commands;
+using System.Buffers.Text;
 using System.Text;
 
 namespace HugeTextProcessing.Generating.Generators;
@@ -7,16 +8,7 @@ namespace HugeTextProcessing.Generating.Generators;
 internal class SimpleFileGenerator
 {
     private static readonly Encoding _utf8 = Encoding.UTF8;
-    private static readonly string[] _indexes = [.. Enumerable.Range(1, 100).Select(i => i.ToString())];
-
-    private readonly Delimiters _delimiters = Delimiters.Default;
     private readonly int _newLineSize = _utf8.GetByteCount(Environment.NewLine);
-    private readonly int _delimitersSize;
-
-    public SimpleFileGenerator()
-    {
-        _delimitersSize = _utf8.GetByteCount(_delimiters.Value);
-    }
 
     public void Execute(GenerateFileCommand command)
     {
@@ -44,21 +36,20 @@ internal class SimpleFileGenerator
 
         void GenerateFromSource()
         {
-            foreach (var item in source)
+            foreach (var line in source)
             {
-                var indexText = GetRandomIndexText();
-                var lineSize = CalculateLineSize(indexText, item) * minDuplicateCount;
+                var lineSize = CalculateLineSize(line) * minDuplicateCount;
 
-                if (currentSize + lineSize > fileSize.Bytes)
+                if (currentSize + lineSize >= fileSize.Bytes)
                 {
                     stop = true;
                     break;
                 }
 
-                WriteItemLine(writer, indexText, item);
+                WriteItemLine(writer, line);
                 while (minDuplicateCount > 1)
                 {
-                    WriteItemLine(writer, indexText, item);
+                    WriteItemLine(writer, line);
                     minDuplicateCount--;
                 }
 
@@ -67,19 +58,25 @@ internal class SimpleFileGenerator
         }
     }
 
-    private static string GetRandomIndexText() => _indexes[Random.Shared.Next(0, _indexes.Length - 1)];
-
-    private int CalculateLineSize(string indexText, string item) =>
-        _utf8.GetByteCount(indexText)
-        + _delimitersSize
-        + _utf8.GetByteCount(item)
-        + _newLineSize;
-
-    private void WriteItemLine(StreamWriter writer, string indexText, string item)
+    private int CalculateLineSize(Line line)
     {
-        writer.Write(indexText);
-        writer.Write(_delimiters.Value);
-        writer.Write(item);
+        Span<byte> buffer = stackalloc byte[11];
+        Utf8Formatter.TryFormat(line.Index, buffer, out var indexBytesWritten);
+
+        return indexBytesWritten
+            + _utf8.GetByteCount(line.Delimiters.Value)
+            + _utf8.GetByteCount(line.Value)
+            + _newLineSize;
+    }
+
+    private static void WriteItemLine(StreamWriter writer, Line line)
+    {
+        Span<byte> buffer = stackalloc byte[11];
+        Utf8Formatter.TryFormat(line.Index, buffer, out var indexBytesWritten);
+
+        writer.BaseStream.Write(buffer[..indexBytesWritten]);
+        writer.Write(line.Delimiters.Value);
+        writer.Write(line.Value);
         writer.Write(Environment.NewLine);
     }
 }

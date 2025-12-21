@@ -1,5 +1,6 @@
 ﻿using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Generating.Commands;
+using System.Buffers.Text;
 using System.Text;
 
 namespace HugeTextProcessing.Generating.Generators;
@@ -7,16 +8,7 @@ namespace HugeTextProcessing.Generating.Generators;
 internal class AsyncFileGenerator
 {
     private static readonly Encoding _utf8 = Encoding.UTF8;
-    private static readonly string[] _indexes = [.. Enumerable.Range(1, 100).Select(i => i.ToString())];
-
-    private readonly char[] _delimiters = Delimiters.Default.Value.ToArray();
     private readonly int _newLineSize = _utf8.GetByteCount(Environment.NewLine);
-    private readonly int _delimitersSize;
-
-    public AsyncFileGenerator()
-    {
-        _delimitersSize = _utf8.GetByteCount(_delimiters);
-    }
 
     public async ValueTask ExecuteAsync(GenerateFileCommand command, CancellationToken cancellationToken)
     {
@@ -45,21 +37,20 @@ internal class AsyncFileGenerator
 
         async ValueTask GenerateFromSource()
         {
-            foreach (var item in source)
+            foreach (var line in source)
             {
-                var indexText = GetRandomIndexText();
-                var lineSize = CalculateLineSize(indexText, item) * minDuplicateCount;
+                var lineSize = CalculateLineSize(line) * minDuplicateCount;
 
-                if (currentSize + lineSize > fileSize.Bytes)
+                if (currentSize + lineSize >= fileSize.Bytes)
                 {
                     stop = true;
                     break;
                 }
 
-                await WriteItemLine(writer, indexText, item, cancellationToken);
+                await WriteItemLine(writer, line, cancellationToken);
                 while (minDuplicateCount > 1)
                 {
-                    await WriteItemLine(writer, indexText, item, cancellationToken);
+                    await WriteItemLine(writer, line, cancellationToken);
                     minDuplicateCount--;
                 }
 
@@ -68,21 +59,24 @@ internal class AsyncFileGenerator
         }
     }
 
-    private static string GetRandomIndexText() => _indexes[Random.Shared.Next(0, _indexes.Length - 1)];
+    private int CalculateLineSize(Line line)
+    {
+        Span<byte> buffer = stackalloc byte[11];
+        Utf8Formatter.TryFormat(line.Index, buffer, out var indexBytesWritten);
 
-    private int CalculateLineSize(string indexText, string item) =>
-        _utf8.GetByteCount(indexText)
-        + _delimitersSize
-        + _utf8.GetByteCount(item)
-        + _newLineSize;
+        return indexBytesWritten
+            + _utf8.GetByteCount(line.Delimiters.Value)
+            + _utf8.GetByteCount(line.Value)
+            + _newLineSize;
+    }
 
-    private async ValueTask WriteItemLine(StreamWriter writer, string indexText, string item, CancellationToken cancellationToken)
+    private static async ValueTask WriteItemLine(StreamWriter writer, Line line, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        await writer.WriteAsync(indexText);
-        await writer.WriteAsync(_delimiters);
-        await writer.WriteAsync(item);
+        await writer.WriteAsync(line.Index.ToString());
+        await writer.WriteAsync(line.Delimiters.Value.ToArray());
+        await writer.WriteAsync(line.Value.ToString());
         await writer.WriteAsync(Environment.NewLine);
     }
 }

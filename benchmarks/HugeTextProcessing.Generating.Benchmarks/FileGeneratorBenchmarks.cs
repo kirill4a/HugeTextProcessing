@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Generating.Commands;
 using HugeTextProcessing.Generating.Generators;
 using HugeTextProcessing.Generating.ValueObjects.Size;
@@ -64,11 +65,13 @@ public class FileGeneratorBenchmarks
         await generator.ExecuteAsync(_command, CancellationToken.None);
     }
 
-    private static IEnumerable<string> EnumerateSource()
+    private static IEnumerable<Line> EnumerateSource()
     {
-        yield return "Apple";
-        yield return "Something something something";
-        yield return "Cherry is the best";
-        yield return "Banana is yellow";
+        yield return StringToLine("Apple");
+        yield return StringToLine("Something something something");
+        yield return StringToLine("Cherry is the best");
+        yield return StringToLine("Banana is yellow");
     }
+
+    private static Line StringToLine(string value) => new(Random.Shared.Next(), value, Delimiters.Default);
 }

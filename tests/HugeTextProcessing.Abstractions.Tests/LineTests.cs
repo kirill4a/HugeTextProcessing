@@ -72,7 +72,7 @@ public class LineTests
         // Assert
         result.Should().NotBeNull();
         result.Index.Should().Be(index);
-        result.Value.Should().Be(value);
+        result.Value.ToString().Should().Be(value);
         result.Delimiters.ToString().Should().Be(delimiters);
     }
 

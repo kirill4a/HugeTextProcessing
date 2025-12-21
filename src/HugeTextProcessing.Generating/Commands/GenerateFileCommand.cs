@@ -1,4 +1,5 @@
-﻿using HugeTextProcessing.Generating.ValueObjects.Size;
+﻿using HugeTextProcessing.Abstractions;
+using HugeTextProcessing.Generating.ValueObjects.Size;
 
 namespace HugeTextProcessing.Generating.Commands;
 
@@ -7,7 +8,7 @@ namespace HugeTextProcessing.Generating.Commands;
 /// </summary>
 public sealed record GenerateFileCommand
 {
-    public GenerateFileCommand(string path, FileSize size, IEnumerable<string> source)
+    public GenerateFileCommand(string path, FileSize size, IEnumerable<Line> source)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ArgumentNullException.ThrowIfNull(size);
@@ -39,5 +40,5 @@ public sealed record GenerateFileCommand
     /// <summary>
     /// The source data from which file being created
     /// </summary>
-    public IEnumerable<string> Source { get; }
+    public IEnumerable<Line> Source { get; }
 };

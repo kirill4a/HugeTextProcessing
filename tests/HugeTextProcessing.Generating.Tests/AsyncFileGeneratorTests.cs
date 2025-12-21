@@ -1,5 +1,6 @@
 ﻿using Bogus;
 using FluentAssertions;
+using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Generating.Commands;
 using HugeTextProcessing.Generating.Generators;
 using HugeTextProcessing.Generating.Tests.Fixtures;
@@ -54,9 +55,9 @@ public class AsyncFileGeneratorTests(TempDirectoryFixture fixture)
         await AssertFileInfo(new FileInfo(path), fileSize, cts.Token);
     }
 
-    private static IEnumerable<string> ArrangeSourceData(int itemsCount) =>
+    private static IEnumerable<Line> ArrangeSourceData(int itemsCount) =>
         Enumerable.Range(1, itemsCount)
-                  .Select(i => Faker.Random.String2(1, i));
+                  .Select(i => new Line(Faker.Random.Number(), Faker.Random.String2(1, i), Delimiters.Default));
 
     private static async ValueTask AssertFileInfo(FileInfo fileInfo, FileSize fileSize, CancellationToken cancellationToken)
     {

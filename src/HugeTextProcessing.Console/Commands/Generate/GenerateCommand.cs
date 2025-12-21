@@ -1,4 +1,5 @@
-﻿using HugeTextProcessing.Generating.Commands;
+﻿using HugeTextProcessing.Abstractions;
+using HugeTextProcessing.Generating.Commands;
 using HugeTextProcessing.Generating.Generators;
 using System.Diagnostics;
 
@@ -30,7 +31,7 @@ internal class GenerateCommand : System.CommandLine.Command
             var command = new GenerateFileCommand(
                 Path.GetTempFileName(),
                 fileSize,
-                sourceData);
+                sourceData.Select(StringToLine));
 
             ExecuteWithLog(command);
         });
@@ -47,4 +48,6 @@ internal class GenerateCommand : System.CommandLine.Command
         sw.Stop();
         System.Console.WriteLine($"File has been created in {sw.Elapsed} at path: {command.Path}");
     }
+
+    private static Line StringToLine(string value) => new(Random.Shared.Next(), value, Delimiters.Default);
 }
