@@ -5,6 +5,7 @@ using HugeTextProcessing.Generating.Commands;
 using HugeTextProcessing.Generating.Generators;
 using HugeTextProcessing.Generating.Tests.Fixtures;
 using HugeTextProcessing.Generating.ValueObjects.Size;
+using HugeTextProcessing.Tests.Fixtures;
 
 namespace HugeTextProcessing.Generating.Tests;
 
@@ -57,7 +58,7 @@ public class AsyncFileGeneratorTests(TempDirectoryFixture fixture)
 
     private static IEnumerable<Line> ArrangeSourceData(int itemsCount) =>
         Enumerable.Range(1, itemsCount)
-                  .Select(i => new Line(Faker.Random.Number(), Faker.Random.String2(1, i), Delimiters.Default));
+                  .Select(i => new Line(Faker.Random.Number(1, 101), Faker.Random.String2(1, i), Delimiters.Default));
 
     private static async ValueTask AssertFileInfo(FileInfo fileInfo, FileSize fileSize, CancellationToken cancellationToken)
     {

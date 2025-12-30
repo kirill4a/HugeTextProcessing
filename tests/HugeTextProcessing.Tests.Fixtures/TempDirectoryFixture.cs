@@ -1,4 +1,5 @@
-﻿namespace HugeTextProcessing.Generating.Tests.Fixtures;
+﻿namespace HugeTextProcessing.Tests.Fixtures;
+
 public class TempDirectoryFixture : IDisposable
 {
     private const string TxtExtension = ".txt";
@@ -10,7 +11,7 @@ public class TempDirectoryFixture : IDisposable
         Directory.CreateDirectory(_tempDirectory);
     }
 
-    public string GetTempFileName() => Path.Combine(_tempDirectory,$"{Guid.NewGuid()}{TxtExtension}");
+    public string GetTempFileName() => Path.Combine(_tempDirectory, $"{Guid.NewGuid()}{TxtExtension}");
 
     public void Dispose()
     {

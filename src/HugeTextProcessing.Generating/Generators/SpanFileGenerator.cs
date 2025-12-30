@@ -6,6 +6,9 @@ using System.Text;
 namespace HugeTextProcessing.Generating.Generators;
 internal class SpanFileGenerator
 {
+    // The maximum bytes using to write Int32 as UTF-8 string
+    private const int MaxIndexBytes = 10;
+
     private static readonly Encoding _utf8 = Encoding.UTF8;
     private readonly byte[] _newLineBytes = _utf8.GetBytes(Environment.NewLine);
 
@@ -35,39 +38,40 @@ internal class SpanFileGenerator
 
         void GenerateFromSource()
         {
-            Span<byte> buffer = stackalloc byte[256];
+            // TODO: need workaround to handle huge strings (more 4096 bytes in UTF-8)
+            Span<byte> buffer = stackalloc byte[4096];
 
             foreach (var line in source)
             {
-                var bytesToWrite = GetLineBytes(line, buffer);
-                var lineSize = bytesToWrite.Length * minDuplicateCount;
-
+                int lineSize = CalculateLineBytes(line) * minDuplicateCount;
                 if (currentSize + lineSize >= fileSize.Bytes)
                 {
                     stop = true;
                     break;
                 }
 
-                stream.Write(bytesToWrite);
-
                 while (minDuplicateCount > 1)
                 {
-                    stream.Write(bytesToWrite);
+                    currentSize += WriteLineBytes(stream, line, buffer);
                     minDuplicateCount--;
                 }
 
-                currentSize += lineSize;
-                buffer.Clear();
+                currentSize += WriteLineBytes(stream, line, buffer);
             }
         }
     }
 
-    private Span<byte> GetLineBytes(Line line, Span<byte> buffer)
+    private int WriteLineBytes(Stream stream, Line line, Span<byte> buffer)
     {
         int bufferPosition = 0;
 
         // Write index as UTF-8 bytes
-        Utf8Formatter.TryFormat(line.Index, buffer, out var bytesWritten);
+        if (!Utf8Formatter.TryFormat(line.Index, buffer, out var bytesWritten))
+        {
+            throw new InvalidOperationException(
+                "Line index formatting failed. " +
+                $"The destination buffer of {buffer.Length} bytes is too small to write {line.Index} as UTF-8 string");
+        }
         bufferPosition += bytesWritten;
 
         // Write delimiters
@@ -85,6 +89,15 @@ internal class SpanFileGenerator
             buffer[bufferPosition++] = newLineByte;
         }
 
-        return buffer[..bufferPosition];
+        var bytesToWrite = buffer[..bufferPosition];
+        stream.Write(bytesToWrite);
+
+        return bytesToWrite.Length;
     }
+
+    private int CalculateLineBytes(Line line) =>
+          MaxIndexBytes
+        + line.Delimiters.Value.Length
+        + _utf8.GetByteCount(line.Value)
+        + _newLineBytes.Length;
 }

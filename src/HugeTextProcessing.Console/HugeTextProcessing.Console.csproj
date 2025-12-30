@@ -4,6 +4,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\HugeTextProcessing.Generating\HugeTextProcessing.Generating.csproj" />
+		<ProjectReference Include="..\HugeTextProcessing.Sorting\HugeTextProcessing.Sorting.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="System.CommandLine" />

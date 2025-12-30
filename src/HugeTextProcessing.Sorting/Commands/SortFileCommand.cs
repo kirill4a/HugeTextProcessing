@@ -1,21 +1,25 @@
 ﻿namespace HugeTextProcessing.Sorting.Commands;
-
-public sealed record class SortFileCommand
+/// <summary>
+/// The command to sort text file
+/// </summary>
+public sealed record SortFileCommand
 {
-    public SortFileCommand(string path)
+    public SortFileCommand(string sourceFilePath, string destinationFilePath)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceFilePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationFilePath);
 
-        if (System.IO.File.Exists(path) is false)
-        {
-            throw new ArgumentException($"File '{path}' does not exists", nameof(path));
-        }
-
-        Path = path;
+        SourceFilePath = sourceFilePath;
+        DestinationFilePath = destinationFilePath;
     }
 
     /// <summary>
-    /// The full path to file being created
+    /// The full path to file being sorted
     /// </summary>
-    public string Path { get; }
+    public string SourceFilePath { get; }
+
+    /// <summary>
+    /// The full path to result sorted file
+    /// </summary>
+    public string DestinationFilePath { get; }
 }

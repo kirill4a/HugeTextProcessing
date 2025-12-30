@@ -1,1 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<InternalsVisibleTo Include="HugeTextProcessing.Console" />
+		<InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
+		<InternalsVisibleTo Include="$(MSBuildProjectName).Benchmarks" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="FluentValidation" />
+		<PackageReference Include="Microsoft.Extensions.Options" />
+		<PackageReference Include="System.IO.Abstractions" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\HugeTextProcessing.Generating\HugeTextProcessing.Generating.csproj" />
+	</ItemGroup>
+</Project>

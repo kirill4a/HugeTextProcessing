@@ -35,6 +35,14 @@ public readonly record struct Line : IComparable<Line>
     /// </summary>
     public Delimiters Delimiters { get; }
 
+    public static Line Parse(string text, string separator)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+
+        var parts = text.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+        return new Line(int.Parse(parts[0]), parts[1], new Delimiters(separator));
+    }
+
     public int CompareTo(Line other)
     {
         if (other == default)

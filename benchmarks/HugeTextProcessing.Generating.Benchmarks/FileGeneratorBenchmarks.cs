@@ -9,8 +9,9 @@ namespace HugeTextProcessing.Generating.Benchmarks;
 [MemoryDiagnoser]
 public class FileGeneratorBenchmarks
 {
-    const long SizeLimit = 10;
-    const FileSizeKind SizeKind = FileSizeKind.MiB;
+    private const long SizeLimit = 10;
+    private const FileSizeKind SizeKind = FileSizeKind.MiB;
+    private static readonly string HugeString = new('A', 1_000);
 
     private string? _tempDir;
     private GenerateFileCommand _command = null!;
@@ -71,6 +72,7 @@ public class FileGeneratorBenchmarks
         yield return StringToLine("Something something something");
         yield return StringToLine("Cherry is the best");
         yield return StringToLine("Banana is yellow");
+        yield return StringToLine(HugeString);
     }
 
     private static Line StringToLine(string value) => new(Random.Shared.Next(), value, Delimiters.Default);

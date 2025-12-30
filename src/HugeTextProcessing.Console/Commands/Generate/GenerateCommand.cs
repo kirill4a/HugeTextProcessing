@@ -49,5 +49,5 @@ internal class GenerateCommand : System.CommandLine.Command
         System.Console.WriteLine($"File has been created in {sw.Elapsed} at path: {command.Path}");
     }
 
-    private static Line StringToLine(string value) => new(Random.Shared.Next(), value, Delimiters.Default);
+    private static Line StringToLine(string value) => new(Random.Shared.Next(1, 1001), value, Delimiters.Default);
 }

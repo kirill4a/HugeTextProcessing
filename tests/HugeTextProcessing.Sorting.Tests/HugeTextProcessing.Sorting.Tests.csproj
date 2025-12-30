@@ -2,20 +2,21 @@
 
 	<ItemGroup>
 		<PackageReference Include="AutoBogus" />
+		<PackageReference Include="Moq" />
 		<PackageReference Include="coverlet.collector" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="xunit" />
 		<PackageReference Include="xunit.runner.visualstudio" />
 		<PackageReference Include="FluentAssertions" />
 	</ItemGroup>
-	
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\HugeTextProcessing.Generating\HugeTextProcessing.Generating.csproj" />
-    <ProjectReference Include="..\HugeTextProcessing.Tests.Fixtures\HugeTextProcessing.Tests.Fixtures.csproj" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Xunit" />
-  </ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\src\HugeTextProcessing.Sorting\HugeTextProcessing.Sorting.csproj" />
+	  <ProjectReference Include="..\HugeTextProcessing.Tests.Fixtures\HugeTextProcessing.Tests.Fixtures.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
 
 </Project>
