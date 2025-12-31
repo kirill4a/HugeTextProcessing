@@ -3,6 +3,7 @@ using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Generating.Commands;
 using HugeTextProcessing.Generating.Generators;
 using HugeTextProcessing.Generating.ValueObjects.Size;
+using System.IO.Abstractions;
 
 namespace HugeTextProcessing.Generating.Benchmarks;
 
@@ -13,6 +14,7 @@ public class FileGeneratorBenchmarks
     private const FileSizeKind SizeKind = FileSizeKind.MiB;
     private static readonly string HugeString = new('A', 1_000);
 
+    private readonly FileSystem _fileSystem = new();
     private string? _tempDir;
     private GenerateFileCommand _command = null!;
 
@@ -26,8 +28,8 @@ public class FileGeneratorBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        _tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_tempDir);
+        _tempDir = _fileSystem.Path.Combine(_fileSystem.Path.GetTempPath(), Guid.NewGuid().ToString());
+        _fileSystem.Directory.CreateDirectory(_tempDir);
 
         _command = new(
             path: Path.Combine(_tempDir, Guid.NewGuid() + ".txt"),
@@ -38,8 +40,8 @@ public class FileGeneratorBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
-        if (Directory.Exists(_tempDir))
-            Directory.Delete(_tempDir, recursive: true);
+        if (_fileSystem.Directory.Exists(_tempDir))
+            _fileSystem.Directory.Delete(_tempDir, recursive: true);
     }
 
     [ParamsSource(nameof(SourceConfigs))]
@@ -48,21 +50,21 @@ public class FileGeneratorBenchmarks
     [Benchmark]
     public void SimpleFileGenerator_Benchmark()
     {
-        var generator = new SimpleFileGenerator();
+        var generator = new SimpleFileGenerator(_fileSystem);
         generator.Execute(_command);
     }
 
     [Benchmark]
     public void SpanFileGenerator_Benchmark()
     {
-        var generator = new SpanFileGenerator();
+        var generator = new SpanFileGenerator(_fileSystem);
         generator.Execute(_command);
     }
 
     [Benchmark]
     public async Task AsyncFileGenerator_Benchmark()
     {
-        var generator = new AsyncFileGenerator();
+        var generator = new AsyncFileGenerator(_fileSystem);
         await generator.ExecuteAsync(_command, CancellationToken.None);
     }
 

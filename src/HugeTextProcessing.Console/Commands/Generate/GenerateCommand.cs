@@ -2,6 +2,7 @@
 using HugeTextProcessing.Generating.Commands;
 using HugeTextProcessing.Generating.Generators;
 using System.Diagnostics;
+using System.IO.Abstractions;
 
 namespace HugeTextProcessing.Console.Commands.Generate;
 internal class GenerateCommand : System.CommandLine.Command
@@ -43,7 +44,7 @@ internal class GenerateCommand : System.CommandLine.Command
         System.Console.WriteLine($"Starting to generate file of size {command.Size.Bytes} bytes at path: {command.Path}");
         var sw = Stopwatch.StartNew();
 
-        new SpanFileGenerator().Execute(command);
+        new SpanFileGenerator(new FileSystem()).Execute(command);
 
         sw.Stop();
         System.Console.WriteLine($"File has been created in {sw.Elapsed} at path: {command.Path}");

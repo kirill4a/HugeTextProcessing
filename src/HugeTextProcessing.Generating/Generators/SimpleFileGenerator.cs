@@ -1,14 +1,16 @@
 ﻿using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Generating.Commands;
 using System.Buffers.Text;
+using System.IO.Abstractions;
 using System.Text;
 
 namespace HugeTextProcessing.Generating.Generators;
 
-internal class SimpleFileGenerator
+internal class SimpleFileGenerator(IFileSystem fileSystem)
 {
     private static readonly Encoding _utf8 = Encoding.UTF8;
     private readonly int _newLineSize = _utf8.GetByteCount(Environment.NewLine);
+    private readonly IFileSystem _fileSystem = fileSystem;
 
     public void Execute(GenerateFileCommand command)
     {
@@ -16,12 +18,13 @@ internal class SimpleFileGenerator
 
         var (path, fileSize, source) = (command.Path, command.Size, command.Source);
 
-        using var writer = new StreamWriter(path, _utf8, new FileStreamOptions
+        using var stream = _fileSystem.FileStream.New(path, new FileStreamOptions
         {
             PreallocationSize = fileSize.Bytes,
             Mode = FileMode.Create,
             Access = FileAccess.Write,
         });
+        using var writer = new StreamWriter(stream, _utf8);
 
         long currentSize = 0;
         byte minDuplicateCount = 2;

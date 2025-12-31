@@ -1,14 +1,16 @@
 ﻿using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Generating.Commands;
 using System.Buffers.Text;
+using System.IO.Abstractions;
 using System.Text;
 
 namespace HugeTextProcessing.Generating.Generators;
 
-internal class AsyncFileGenerator
+internal class AsyncFileGenerator(IFileSystem fileSystem)
 {
     private static readonly Encoding _utf8 = Encoding.UTF8;
     private readonly int _newLineSize = _utf8.GetByteCount(Environment.NewLine);
+    private readonly IFileSystem _fileSystem = fileSystem;
 
     public async ValueTask ExecuteAsync(GenerateFileCommand command, CancellationToken cancellationToken)
     {
@@ -16,13 +18,14 @@ internal class AsyncFileGenerator
 
         var (path, fileSize, source) = (command.Path, command.Size, command.Source);
 
-        await using var writer = new StreamWriter(path, _utf8, new FileStreamOptions
+        using var stream = _fileSystem.FileStream.New(path, new FileStreamOptions
         {
             PreallocationSize = fileSize.Bytes,
             Mode = FileMode.Create,
             Access = FileAccess.Write,
             Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
         });
+        using var writer = new StreamWriter(stream, _utf8);
 
         long currentSize = 0;
         byte minDuplicateCount = 2;

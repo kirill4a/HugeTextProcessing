@@ -1,16 +1,18 @@
 ﻿using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Generating.Commands;
 using System.Buffers.Text;
+using System.IO.Abstractions;
 using System.Text;
 
 namespace HugeTextProcessing.Generating.Generators;
-internal class SpanFileGenerator
+internal class SpanFileGenerator(IFileSystem fileSystem)
 {
     // The maximum bytes using to write Int32 as UTF-8 string
     private const int MaxIndexBytes = 10;
 
     private static readonly Encoding _utf8 = Encoding.UTF8;
     private readonly byte[] _newLineBytes = _utf8.GetBytes(Environment.NewLine);
+    private readonly IFileSystem _fileSystem = fileSystem;
 
     public void Execute(GenerateFileCommand command)
     {
@@ -18,7 +20,7 @@ internal class SpanFileGenerator
 
         var (path, fileSize, source) = (command.Path, command.Size, command.Source);
 
-        using var stream = new FileStream(path, new FileStreamOptions
+        using var stream = _fileSystem.FileStream.New(path, new FileStreamOptions
         {
             PreallocationSize = fileSize.Bytes,
             Mode = FileMode.Create,

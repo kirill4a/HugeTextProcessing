@@ -2,16 +2,15 @@
 using FluentAssertions;
 using HugeTextProcessing.Abstractions;
 using HugeTextProcessing.Abstractions.IO;
-using HugeTextProcessing.Generating.Tests.Fixtures;
 using HugeTextProcessing.Tests.Fixtures;
+using System.IO.Abstractions;
 
 namespace HugeTextProcessing.Generating.Tests;
 
-[Collection(nameof(TempFilesCollection))]
-public class LinesWriterTests(TempDirectoryFixture fixture)
+public class LinesWriterTests(FileSystemFixture fixture) : IClassFixture<FileSystemFixture>
 {
     private static readonly Faker Faker = new();
-    private readonly TempDirectoryFixture _fixture = fixture;
+    private readonly FileSystemFixture _fixture = fixture;
 
     public static TheoryData<Stream?, IEnumerable<Line>?> IncorrectData =>
         new()
@@ -72,8 +71,8 @@ public class LinesWriterTests(TempDirectoryFixture fixture)
         ILinesWriter writer = new LinesWriter();
 
         long bytesWritten = 0;
-        var path = _fixture.GetTempFileName();
-        using (var stream = File.Create(path))
+        var path = _fixture.GetRandomTempFileName();
+        using (var stream = _fixture.FileSystem.File.Create(path))
         {
             // Act
             bytesWritten = writer.WriteAsText(stream, lines);
@@ -84,20 +83,20 @@ public class LinesWriterTests(TempDirectoryFixture fixture)
             stream.Length.Should().Be(bytesWritten);
         }
 
-        File.Exists(path).Should().BeTrue();
-        await AssertLinesOrder(new FileInfo(path), bytesWritten, lines);
+        _fixture.FileSystem.FileExists(path).Should().BeTrue();
+        await AssertLinesOrder(_fixture.FileSystem.FileInfo.New(path), bytesWritten, lines);
     }
 
     private static IEnumerable<Line> ArrangeSourceData(int itemsCount) =>
         Enumerable.Range(1, itemsCount)
                   .Select(i => new Line(Faker.Random.Number(1, 101), Faker.Random.String2(1, i), Delimiters.Default));
 
-    private static async ValueTask AssertLinesOrder(FileInfo fileInfo, long bytesWritten, Line[] sourceLInes)
+    private async ValueTask AssertLinesOrder(IFileInfo fileInfo, long bytesWritten, Line[] sourceLInes)
     {
         fileInfo.Length.Should().Be(bytesWritten);
 
         var linesAsText = sourceLInes.Select(x => x.ToString()).ToArray();
-        var lines = await File.ReadAllLinesAsync(fileInfo.FullName, CancellationToken.None);
+        var lines = await _fixture.FileSystem.File.ReadAllLinesAsync(fileInfo.FullName, CancellationToken.None);
 
         lines.Should().HaveSameCount(linesAsText);
         lines.Should().ContainInConsecutiveOrder(linesAsText);

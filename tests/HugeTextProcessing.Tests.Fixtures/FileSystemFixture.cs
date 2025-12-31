@@ -11,6 +11,9 @@ public class FileSystemFixture
 
     public MockFileSystem FileSystem { get; }
 
+    public string GetRandomTempFileName() =>
+        FileSystem.Path.Combine(FileSystem.Path.GetTempPath(), FileSystem.Path.GetRandomFileName());
+
     public void AddEmptyFile(string path) =>
         FileSystem.AddFile(path, new MockFileData([]));
 
