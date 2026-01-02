@@ -32,6 +32,7 @@ public class LineWriterBenchmarks
         {
             Mode = FileMode.Create,
             Access = FileAccess.Write,
+            Options = FileOptions.SequentialScan,
         });
     }
 
@@ -52,6 +53,17 @@ public class LineWriterBenchmarks
     {
         _stream!.Position = 0;
         LinesWriterFactory.Create().WriteAsText(_stream, Config.Data);
+    }
+
+    [Benchmark]
+    public void LinesWriter_Benchmark_SingleLine()
+    {
+        var writer = LinesWriterFactory.Create();
+        foreach (var line in Config.Data)
+        {
+            _stream!.Position = 0;
+            writer.WriteAsText(_stream, line);
+        }
     }
 
     private static IEnumerable<Line> EnumerateSource()

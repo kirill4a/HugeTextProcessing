@@ -55,6 +55,7 @@ internal class FileChunker(IFileSystem fileSystem, IValidator<SortOptions> optio
                 {
                     Mode = FileMode.Create,
                     Access = FileAccess.Write,
+                    Options = FileOptions.SequentialScan,
                 });
 
                 ILinesWriter writer = LinesWriterFactory.Create();

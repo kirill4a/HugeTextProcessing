@@ -4,12 +4,10 @@ using HugeTextProcessing.Generating;
 using HugeTextProcessing.Sorting.Configuration;
 using Microsoft.Extensions.Options;
 using System.IO.Abstractions;
-using System.Text;
 
 namespace HugeTextProcessing.Sorting;
 internal class FileMerger(IFileSystem fileSystem)
 {
-    private static readonly Encoding _utf8 = Encoding.UTF8;
     private readonly IFileSystem _fileSystem = fileSystem;
 
     public void Merge(
@@ -45,6 +43,7 @@ internal class FileMerger(IFileSystem fileSystem)
             {
                 Mode = FileMode.Create,
                 Access = FileAccess.Write,
+                Options = FileOptions.SequentialScan,
             });
             ILinesWriter writer = LinesWriterFactory.Create();
 

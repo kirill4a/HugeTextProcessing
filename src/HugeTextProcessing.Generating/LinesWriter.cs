@@ -9,6 +9,8 @@ internal class LinesWriter : ILinesWriter
 {
     // The maximum bytes using to write Int32 as UTF-8 string
     private const int MaxIndexBytes = 10;
+    private const int MaxLineBytes = 4096;
+    private const int BatchSize = 64 * 1024;
 
     private static readonly Encoding _utf8 = Encoding.UTF8;
     private readonly byte[] _newLineBytes = _utf8.GetBytes(Environment.NewLine);
@@ -18,9 +20,16 @@ internal class LinesWriter : ILinesWriter
     {
         ArgumentNullException.ThrowIfNull(stream);
 
-        // TODO: need workaround to handle huge strings (more 4096 bytes in UTF-8)
-        Span<byte> buffer = stackalloc byte[4096];
-        return WriteLineBytes(stream, line, buffer);
+        long totalWritten = 0;
+        int batchPosition = 0;
+        Span<byte> batchBuffer = stackalloc byte[BatchSize];
+        Span<byte> lineBuffer = stackalloc byte[MaxLineBytes];
+
+        var lineBytes = WriteLineToBuffer(line, lineBuffer);
+        lineBuffer[..lineBytes].CopyTo(batchBuffer[batchPosition..]);
+        batchPosition += lineBytes;
+        FlushBatch(stream, batchBuffer, ref batchPosition, ref totalWritten);
+        return totalWritten;
     }
 
     /// <inheritdoc/>
@@ -29,49 +38,77 @@ internal class LinesWriter : ILinesWriter
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(lines);
 
-        // TODO: need workaround to handle huge strings (more 4096 bytes in UTF-8)
-        Span<byte> buffer = stackalloc byte[4096];
-        var bytesWritten = 0;
+        Span<byte> batchBuffer = stackalloc byte[BatchSize];
+        Span<byte> lineBuffer = stackalloc byte[MaxLineBytes];
+
+        long totalWritten = 0;
+        int batchPosition = 0;
 
         foreach (var line in lines)
         {
-            bytesWritten += WriteLineBytes(stream, line, buffer);
+            int lineBytes = WriteLineToBuffer(line, lineBuffer);
+
+            // Line too big for batch → flush batch + write current line directly
+            if (lineBytes > batchBuffer.Length)
+            {
+                FlushBatch(stream, batchBuffer, ref batchPosition, ref totalWritten);
+                stream.Write(lineBuffer[..lineBytes]);
+                totalWritten += lineBytes;
+                continue;
+            }
+
+            // Not enough space → flush batch
+            if (batchPosition + lineBytes > batchBuffer.Length)
+            {
+                FlushBatch(stream, batchBuffer, ref batchPosition, ref totalWritten);
+            }
+
+            // Copy line into batch
+            lineBuffer[..lineBytes].CopyTo(batchBuffer[batchPosition..]);
+            batchPosition += lineBytes;
         }
 
-        return bytesWritten;
+        // Final flush
+        FlushBatch(stream, batchBuffer, ref batchPosition, ref totalWritten);
+
+        return totalWritten;
     }
 
-    private int WriteLineBytes(Stream stream, Line line, Span<byte> buffer)
+    private int WriteLineToBuffer(Line line, Span<byte> buffer)
     {
-        int bufferPosition = 0;
+        int pos = 0;
 
-        // Write index as UTF-8 bytes
-        if (!Utf8Formatter.TryFormat(line.Index, buffer, out var bytesWritten))
+        if (!Utf8Formatter.TryFormat(line.Index, buffer, out var written))
         {
             throw new InvalidOperationException(
                 "Line index formatting failed. " +
                 $"The destination buffer of {buffer.Length} bytes is too small to write {line.Index} as UTF-8 string");
         }
-        bufferPosition += bytesWritten;
 
-        // Write delimiters
+        pos += written;
+
         foreach (var delimiter in line.Delimiters.Value)
-        {
-            buffer[bufferPosition++] = (byte)delimiter;
-        }
+            buffer[pos++] = (byte)delimiter;
 
-        // Write text
-        bufferPosition += _utf8.GetBytes(line.Value, buffer[bufferPosition..]);
+        pos += _utf8.GetBytes(line.Value, buffer[pos..]);
 
-        // Write newline
-        foreach (var newLineByte in _newLineBytes)
-        {
-            buffer[bufferPosition++] = newLineByte;
-        }
+        foreach (var b in _newLineBytes)
+            buffer[pos++] = b;
 
-        var bytesToWrite = buffer[..bufferPosition];
-        stream.Write(bytesToWrite);
+        return pos;
+    }
 
-        return bytesToWrite.Length;
+    private static void FlushBatch(
+        Stream stream,
+        Span<byte> batchBuffer,
+        ref int batchPosition,
+        ref long totalWritten)
+    {
+        if (batchPosition == 0)
+            return;
+
+        stream.Write(batchBuffer[..batchPosition]);
+        totalWritten += batchPosition;
+        batchPosition = 0;
     }
 }
