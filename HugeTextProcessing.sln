@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HugeTextProcessing.Generati
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{65B71813-A185-4F52-8D6D-C1F21C18F73C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HugeTextProcessing.Generating.Benchmarks", "benchmarks\HugeTextProcessing.Generating.Benchmarks\HugeTextProcessing.Generating.Benchmarks.csproj", "{95A005EF-8657-4C98-8F4E-79DF53403FFA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HugeTextProcessing.Benchmarks", "benchmarks\HugeTextProcessing.Generating.Benchmarks\HugeTextProcessing.Benchmarks.csproj", "{95A005EF-8657-4C98-8F4E-79DF53403FFA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HugeTextProcessing.Console", "src\HugeTextProcessing.Console\HugeTextProcessing.Console.csproj", "{E2970993-B551-CCCD-C851-6E6B1E61F5BE}"
 EndProject

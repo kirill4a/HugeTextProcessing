@@ -1,22 +1,18 @@
 ﻿using BenchmarkDotNet.Attributes;
 using HugeTextProcessing.Abstractions;
-using HugeTextProcessing.Generating.Commands;
-using HugeTextProcessing.Generating.Generators;
-using HugeTextProcessing.Generating.ValueObjects.Size;
+using HugeTextProcessing.Generating;
 using System.IO.Abstractions;
 
 namespace HugeTextProcessing.Benchmarks;
 
 [MemoryDiagnoser]
-public class FileGeneratorBenchmarks
+public class LineWriterBenchmarks
 {
-    private const long SizeLimit = 10;
-    private const FileSizeKind SizeKind = FileSizeKind.MiB;
     private static readonly string HugeString = new('A', 1_000);
 
     private readonly FileSystem _fileSystem = new();
+    private FileSystemStream? _stream;
     private string? _tempDir;
-    private GenerateFileCommand _command = null!;
 
     public static IEnumerable<SourceConfig> SourceConfigs =>
     [
@@ -31,15 +27,19 @@ public class FileGeneratorBenchmarks
         _tempDir = _fileSystem.Path.Combine(_fileSystem.Path.GetTempPath(), Guid.NewGuid().ToString());
         _fileSystem.Directory.CreateDirectory(_tempDir);
 
-        _command = new(
-            path: Path.Combine(_tempDir, Guid.NewGuid() + ".txt"),
-            size: FileSize.From(SizeLimit, SizeKind),
-            source: Config.Data);
+        var tempFile = _fileSystem.Path.Combine(_tempDir!, _fileSystem.Path.GetRandomFileName());
+        _stream = _fileSystem.FileStream.New(tempFile, new FileStreamOptions
+        {
+            Mode = FileMode.Create,
+            Access = FileAccess.Write,
+        });
     }
 
     [GlobalCleanup]
     public void Cleanup()
     {
+        _stream?.Dispose();
+
         if (_fileSystem.Directory.Exists(_tempDir))
             _fileSystem.Directory.Delete(_tempDir, recursive: true);
     }
@@ -48,24 +48,10 @@ public class FileGeneratorBenchmarks
     public SourceConfig Config { get; set; }
 
     [Benchmark]
-    public void SimpleFileGenerator_Benchmark()
+    public void LinesWriter_Benchmark()
     {
-        var generator = new SimpleFileGenerator(_fileSystem);
-        generator.Execute(_command);
-    }
-
-    [Benchmark]
-    public void SpanFileGenerator_Benchmark()
-    {
-        var generator = new SpanFileGenerator(_fileSystem);
-        generator.Execute(_command);
-    }
-
-    [Benchmark]
-    public async Task AsyncFileGenerator_Benchmark()
-    {
-        var generator = new AsyncFileGenerator(_fileSystem);
-        await generator.ExecuteAsync(_command, CancellationToken.None);
+        _stream!.Position = 0;
+        LinesWriterFactory.Create().WriteAsText(_stream, Config.Data);
     }
 
     private static IEnumerable<Line> EnumerateSource()

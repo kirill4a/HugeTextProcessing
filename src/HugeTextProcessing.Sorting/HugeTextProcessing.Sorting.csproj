@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
+		<InternalsVisibleTo Include="HugeTextProcessing.Benchmarks" />
 		<InternalsVisibleTo Include="HugeTextProcessing.Console" />
 		<InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
-		<InternalsVisibleTo Include="$(MSBuildProjectName).Benchmarks" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="FluentValidation" />
