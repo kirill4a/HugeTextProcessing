@@ -105,7 +105,7 @@ public class FileChunkerTests(FileSystemFixture fixture) : IClassFixture<FileSys
     private async Task AssertFileSorted(string filePath)
     {
         var textLines = await _fixture.FileSystem.File.ReadAllLinesAsync(filePath, CancellationToken.None);
-        var lines = textLines.Select(x => Line.Parse(x, Separator)).ToArray();
+        var lines = textLines.Select(x => Line.Parse(x, Delimiters.Default)).ToArray();
 
         lines.Should().BeInAscendingOrder();
     }

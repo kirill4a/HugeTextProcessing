@@ -35,12 +35,24 @@ public readonly record struct Line : IComparable<Line>
     /// </summary>
     public Delimiters Delimiters { get; }
 
-    public static Line Parse(string text, string separator)
+    public static Line Parse(string text, Delimiters separator)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
 
-        var parts = text.Split(separator, StringSplitOptions.RemoveEmptyEntries);
-        return new Line(int.Parse(parts[0]), parts[1], new Delimiters(separator));
+        ReadOnlySpan<char> textSpan = text.AsSpan();
+        ReadOnlySpan<char> separatorSpan = separator.Value;
+
+        int sepIndex = textSpan.IndexOf(separatorSpan);
+        if (sepIndex < 0)
+            throw new FormatException("Separator not found.");
+
+        ReadOnlySpan<char> indexSpan = textSpan[..sepIndex];
+        ReadOnlySpan<char> valueSpan = textSpan[(sepIndex + separatorSpan.Length)..];
+
+        if (!int.TryParse(indexSpan, out int index))
+            throw new FormatException("Incorrect index.");
+
+        return new Line(index, new string(valueSpan), separator);
     }
 
     public int CompareTo(Line other)

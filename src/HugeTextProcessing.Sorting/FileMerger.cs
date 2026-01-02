@@ -8,6 +8,7 @@ using System.IO.Abstractions;
 namespace HugeTextProcessing.Sorting;
 internal class FileMerger(IFileSystem fileSystem)
 {
+    const int ReaderBufferSize = 1 << 20;
     private readonly IFileSystem _fileSystem = fileSystem;
 
     public void Merge(
@@ -18,8 +19,10 @@ internal class FileMerger(IFileSystem fileSystem)
         ArgumentNullException.ThrowIfNull(inputFiles);
         ArgumentNullException.ThrowIfNull(options);
 
+        var delimiters = new Delimiters(options.Value.CommonSeparator);
+
         var readers = new List<StreamReader>();
-        var pq = new PriorityQueue<(Line line, int fileIndex), Line>();// TODO: replace Tuple with record struct
+        var pq = new PriorityQueue<LineWithFileIndex, Line>();
 
         try
         {
@@ -68,10 +71,10 @@ internal class FileMerger(IFileSystem fileSystem)
 
         void EnqueueLine(string? lineText, int fileIndex)
         {
-            if (!string.IsNullOrWhiteSpace(lineText))
+            if (!string.IsNullOrEmpty(lineText))
             {
-                var line = Line.Parse(lineText, options.Value.CommonSeparator);
-                pq.Enqueue((line, fileIndex), line);
+                var line = Line.Parse(lineText, delimiters);
+                pq.Enqueue(new(line, fileIndex), line);
             }
         }
     }
@@ -82,8 +85,11 @@ internal class FileMerger(IFileSystem fileSystem)
         {
             Mode = FileMode.Open,
             Access = FileAccess.Read,
+            BufferSize = ReaderBufferSize,
         });
 
-        return new StreamReader(stream);
+        return new StreamReader(stream, detectEncodingFromByteOrderMarks: true, bufferSize: ReaderBufferSize);
     }
+
+    private readonly record struct LineWithFileIndex(Line Line, int FileIndex);
 }

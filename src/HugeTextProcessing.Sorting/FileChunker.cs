@@ -34,19 +34,25 @@ internal class FileChunker(IFileSystem fileSystem, IValidator<SortOptions> optio
         string tempDirectory,
         CancellationToken cancellationToken)
     {
+        var delimiters = new Delimiters(separator);
         var options = new ParallelOptions
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount,
             CancellationToken = cancellationToken,
         };
 
+        ILinesWriter writer = LinesWriterFactory.Create();
 
         await Parallel.ForEachAsync(
             ReadChunksAsync(sourcePath, chunkLimit, cancellationToken),
             options,
             (chunk, _) =>
             {
-                var lines = chunk.Select(x => Line.Parse(x, separator)).ToArray();
+                var lines = new Line[chunk.Count];
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    lines[i] = Line.Parse(chunk[i], delimiters);
+                }
 
                 Array.Sort(lines);
 
@@ -56,22 +62,21 @@ internal class FileChunker(IFileSystem fileSystem, IValidator<SortOptions> optio
                     Mode = FileMode.Create,
                     Access = FileAccess.Write,
                     Options = FileOptions.SequentialScan,
+                    BufferSize = 1 << 20,
                 });
 
-                ILinesWriter writer = LinesWriterFactory.Create();
                 writer.WriteAsText(stream, lines);
 
                 return ValueTask.CompletedTask;
             });
     }
 
-    private async IAsyncEnumerable<string[]> ReadChunksAsync(
+    private async IAsyncEnumerable<List<string>> ReadChunksAsync(
         string path,
         long chunkLimit,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        // TODO: try replace with array
-        var chunk = new List<string>();
+        var chunk = new List<string>(1024);
         long currentBytes = 0;
 
         await foreach (var textLine in _fileSystem.File.ReadLinesAsync(path, _utf8, cancellationToken))
@@ -82,21 +87,17 @@ internal class FileChunker(IFileSystem fileSystem, IValidator<SortOptions> optio
             if (chunk.Count > 0
                 && currentBytes + estimatedBytes >= chunkLimit)
             {
-                yield return chunk.ToArray();
-                ResetChunk();
+                yield return chunk;
+                chunk = new List<string>(1024);
+                currentBytes = 0;
             }
 
             chunk.Add(textLine);
             currentBytes += estimatedBytes;
         }
 
-        yield return chunk.ToArray();
-
-        void ResetChunk()
-        {
-            chunk.Clear();
-            currentBytes = 0;
-        }
+        if (chunk.Count > 0)
+            yield return chunk;
     }
 
     private IDirectoryInfo CreateTempDirectory() => _fileSystem.Directory.CreateTempSubdirectory("file_sorter_");
