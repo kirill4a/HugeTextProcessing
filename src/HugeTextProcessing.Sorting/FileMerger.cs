@@ -8,7 +8,8 @@ using System.IO.Abstractions;
 namespace HugeTextProcessing.Sorting;
 internal class FileMerger(IFileSystem fileSystem)
 {
-    const int ReaderBufferSize = 1 << 20;
+    private const int ReaderBufferSize = 1 << 20;
+    private const int OutputBufferSize = 5 << 20;
     private readonly IFileSystem _fileSystem = fileSystem;
 
     public void Merge(
@@ -23,6 +24,15 @@ internal class FileMerger(IFileSystem fileSystem)
 
         var readers = new List<StreamReader>();
         var pq = new PriorityQueue<LineWithFileIndex, Line>();
+        var outputBuffer = new Queue<Line>(OutputBufferSize);
+
+        using var stream = _fileSystem.FileStream.New(outputFilePath, new FileStreamOptions
+        {
+            Mode = FileMode.Create,
+            Access = FileAccess.Write,
+            Options = FileOptions.SequentialScan,
+        });
+        ILinesWriter writer = LinesWriterFactory.Create();
 
         try
         {
@@ -42,22 +52,22 @@ internal class FileMerger(IFileSystem fileSystem)
                 return;
             }
 
-            using var stream = _fileSystem.FileStream.New(outputFilePath, new FileStreamOptions
-            {
-                Mode = FileMode.Create,
-                Access = FileAccess.Write,
-                Options = FileOptions.SequentialScan,
-            });
-            ILinesWriter writer = LinesWriterFactory.Create();
-
             while (pq.Count > 0)
             {
+                if (outputBuffer.Count >= OutputBufferSize)
+                {
+                    FlushBuffer();
+                }
+
                 var (line, fileIndex) = pq.Dequeue();
-                writer.WriteAsText(stream, line);
+                outputBuffer.Enqueue(line);
 
                 var nextLine = readers[fileIndex].ReadLine();
                 EnqueueLine(nextLine, fileIndex);
             }
+
+            // final flush of the buffer
+            FlushBuffer();
         }
         finally
         {
@@ -76,6 +86,12 @@ internal class FileMerger(IFileSystem fileSystem)
                 var line = Line.Parse(lineText, delimiters);
                 pq.Enqueue(new(line, fileIndex), line);
             }
+        }
+
+        void FlushBuffer()
+        {
+            writer.WriteAsText(stream, outputBuffer);
+            outputBuffer.Clear();
         }
     }
 
