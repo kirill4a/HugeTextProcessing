@@ -16,23 +16,6 @@ internal class LinesWriter : ILinesWriter
     private readonly byte[] _newLineBytes = _utf8.GetBytes(Environment.NewLine);
 
     /// <inheritdoc/>
-    public long WriteAsText(Stream stream, Line line)
-    {
-        ArgumentNullException.ThrowIfNull(stream);
-
-        long totalWritten = 0;
-        int batchPosition = 0;
-        Span<byte> batchBuffer = stackalloc byte[BatchSize];
-        Span<byte> lineBuffer = stackalloc byte[MaxLineBytes];
-
-        var lineBytes = WriteLineToBuffer(line, lineBuffer);
-        lineBuffer[..lineBytes].CopyTo(batchBuffer[batchPosition..]);
-        batchPosition += lineBytes;
-        FlushBatch(stream, batchBuffer, ref batchPosition, ref totalWritten);
-        return totalWritten;
-    }
-
-    /// <inheritdoc/>
     public long WriteAsText(Stream stream, IEnumerable<Line> lines)
     {
         ArgumentNullException.ThrowIfNull(stream);

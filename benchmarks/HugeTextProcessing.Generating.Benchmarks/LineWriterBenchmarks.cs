@@ -55,17 +55,6 @@ public class LineWriterBenchmarks
         LinesWriterFactory.Create().WriteAsText(_stream, Config.Data);
     }
 
-    [Benchmark]
-    public void LinesWriter_Benchmark_SingleLine()
-    {
-        var writer = LinesWriterFactory.Create();
-        foreach (var line in Config.Data)
-        {
-            _stream!.Position = 0;
-            writer.WriteAsText(_stream, line);
-        }
-    }
-
     private static IEnumerable<Line> EnumerateSource()
     {
         yield return StringToLine("Apple");

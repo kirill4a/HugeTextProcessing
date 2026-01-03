@@ -64,22 +64,6 @@ public class LinesWriterTests(FileSystemFixture fixture) : IClassFixture<FileSys
     }
 
     [Fact]
-    public void When_SourceLineSingle_ShouldWriteAndNotFail()
-    {
-        // Arrange
-        var hugeText = new string('B', 1_000);
-        using var stream = new MemoryStream();
-        Line line = new(1, hugeText, Delimiters.Default);
-        ILinesWriter writer = new LinesWriter();
-
-        // Act
-        var bytesWritten = writer.WriteAsText(stream, line);
-
-        // Assert        
-        bytesWritten.Should().BeGreaterThan(0);
-    }
-
-    [Fact]
     public async Task When_SourceLinesNotEmpty_ShouldWriteInSourceLinesOrder()
     {
         // Arrange
