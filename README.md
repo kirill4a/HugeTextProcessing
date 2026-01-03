@@ -1,9 +1,13 @@
 # Usage
 
-`dotnet HugeTextProcessing.Console.dll`
-
-output:
-```Description:
+```
+dotnet HugeTextProcessing.Console.dll
+```
+<details>
+  <summary>output</summary>
+  
+```bash  
+  Description:
   Huge text generator CLI
 
 Usage:
@@ -16,15 +20,19 @@ Options:
 Commands:
   generate  Generates a multiline text file
   sort      Sorts a multiline text file
-```  
+  ```
+</details>
   
 # To generate file  
 
 ### display help usage
-`dotnet HugeTextProcessing.Console.dll generate -h`
-
-output:
-```Description:
+```bash
+dotnet HugeTextProcessing.Console.dll generate -h
+```
+<details>
+  <summary>output</summary>
+  
+  ```Description:
   Generates a multiline text file
 
 Usage:
@@ -34,18 +42,23 @@ Options:
   -s, --size <size>  File size (e.g. 1GB, 500MB, 10KB); default 1MB in case of not specified. [default: FileSize { Bytes = 1048576 }]
   -?, -h, --help     Show help and usage information
 ```
+</details>
 
 ### generates 1 GB file in temp directory
-`dotnet HugeTextProcessing.Console.dll generate --size 1GB`
-
+```bash
+dotnet HugeTextProcessing.Console.dll generate --size 1GB
+```
 
 # To sort file  
 
 ### display help usage
-`dotnet HugeTextProcessing.Console.dll sort -h`
+```bash
+dotnet HugeTextProcessing.Console.dll sort -h
+```
+<details>
+  <summary>output</summary>
 
-output:
-```Description:
+  ```Description:
   Sorts a multiline text file
 
 Usage:
@@ -56,6 +69,9 @@ Options:
   -d, --destination <destination> (REQUIRED)  The full path to result sorted file.
   -?, -h, --help                              Show help and usage information
 ```
+</details>
   
 ### sorts specified file and save results in another one  
-`dotnet HugeTextProcessing.Console.dll sort --source QWERTY.txt -d ASDFGH.txt`
+```bash
+dotnet HugeTextProcessing.Console.dll sort --source QWERTY.txt -d ASDFGH.txt
+```
