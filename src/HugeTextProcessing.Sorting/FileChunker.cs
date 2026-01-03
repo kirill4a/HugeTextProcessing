@@ -6,6 +6,7 @@ using HugeTextProcessing.Sorting.Configuration;
 using Microsoft.Extensions.Options;
 using System.IO.Abstractions;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace HugeTextProcessing.Sorting;
@@ -44,17 +45,11 @@ internal class FileChunker(IFileSystem fileSystem, IValidator<SortOptions> optio
         ILinesWriter writer = LinesWriterFactory.Create();
 
         await Parallel.ForEachAsync(
-            ReadChunksAsync(sourcePath, chunkLimit, cancellationToken),
+            ReadChunksAsync(sourcePath, chunkLimit, delimiters, cancellationToken),
             options,
             (chunk, _) =>
             {
-                var lines = new Line[chunk.Count];
-                for (int i = 0; i < chunk.Count; i++)
-                {
-                    lines[i] = Line.Parse(chunk[i], delimiters);
-                }
-
-                Array.Sort(lines);
+                CollectionsMarshal.AsSpan(chunk).Sort();
 
                 var tempFile = _fileSystem.Path.Combine(tempDirectory, _fileSystem.Path.GetRandomFileName());
                 using var stream = _fileSystem.FileStream.New(tempFile, new FileStreamOptions
@@ -65,34 +60,39 @@ internal class FileChunker(IFileSystem fileSystem, IValidator<SortOptions> optio
                     BufferSize = 1 << 20,
                 });
 
-                writer.WriteAsText(stream, lines);
+                //TODO: (de)serialize chunks in binary format
+                writer.WriteAsText(stream, chunk);
 
                 return ValueTask.CompletedTask;
             });
     }
 
-    private async IAsyncEnumerable<List<string>> ReadChunksAsync(
+    private async IAsyncEnumerable<List<Line>> ReadChunksAsync(
         string path,
         long chunkLimit,
+        Delimiters delimiters,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var chunk = new List<string>(1024);
+        const int chunkCapacity = 8192;
+        const int bytesReservation = 64;
+
+        var chunk = new List<Line>(chunkCapacity);
         long currentBytes = 0;
 
         await foreach (var textLine in _fileSystem.File.ReadLinesAsync(path, _utf8, cancellationToken))
         {
-            long estimatedBytes = (long)textLine.Length * sizeof(char) + 64;
+            long estimatedBytes = (long)textLine.Length * sizeof(char) + bytesReservation;
 
             // Ensures at least one line per chunk (handles giant lines)
             if (chunk.Count > 0
                 && currentBytes + estimatedBytes >= chunkLimit)
             {
                 yield return chunk;
-                chunk = new List<string>(1024);
+                chunk = new List<Line>(chunkCapacity);
                 currentBytes = 0;
             }
 
-            chunk.Add(textLine);
+            chunk.Add(Line.Parse(textLine, delimiters));
             currentBytes += estimatedBytes;
         }
 

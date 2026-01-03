@@ -48,24 +48,10 @@ public class FileGeneratorBenchmarks
     public SourceConfig Config { get; set; }
 
     [Benchmark]
-    public void SimpleFileGenerator_Benchmark()
-    {
-        var generator = new SimpleFileGenerator(_fileSystem);
-        generator.Execute(_command);
-    }
-
-    [Benchmark]
     public void SpanFileGenerator_Benchmark()
     {
         var generator = new SpanFileGenerator(_fileSystem);
         generator.Execute(_command);
-    }
-
-    [Benchmark]
-    public async Task AsyncFileGenerator_Benchmark()
-    {
-        var generator = new AsyncFileGenerator(_fileSystem);
-        await generator.ExecuteAsync(_command, CancellationToken.None);
     }
 
     private static IEnumerable<Line> EnumerateSource()
